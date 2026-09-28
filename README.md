@@ -1,16 +1,21 @@
-# aplikasi_suci
+# Aplikasi Suci
 
-A new Flutter project.
+Project praktikum Flutter.
 
-## Getting Started
+## Deskripsi
 
-This project is a starting point for a Flutter application.
+Aplikasi ini dibuat untuk memenuhi tugas praktikum menggunakan Flutter.
 
-A few resources to get you started if this is your first Flutter project:
+## Teknologi
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- Flutter
+- Dart
+- Visual Studio Code
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Cara Menjalankan
+
+Jalankan perintah berikut di terminal:
+
+```bash
+flutter pub get
+flutter run -d chrome
