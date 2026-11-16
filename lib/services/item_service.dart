@@ -1,32 +1,7 @@
 import 'package:flutter/material.dart';
+import '../models/lost_item.dart';
 
-class LostItem {
-  final String name;
-  final String category;
-  final String location;
-  final DateTime date;
-  final String description;
-  final String contact;
-  bool found;
-
-  LostItem({
-    required this.name,
-    required this.category,
-    required this.location,
-    required this.date,
-    required this.description,
-    required this.contact,
-    this.found = false,
-  });
-}
-
-String formatDate(DateTime d) {
-  const bulan = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-    'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
-  ];
-  return '${d.day} ${bulan[d.month - 1]} ${d.year}';
-}
+export '../models/lost_item.dart';
 
 /// Penyimpanan laporan di memori (hilang saat app di-restart).
 class ItemService {
@@ -61,6 +36,7 @@ class ItemService {
 
   static final List<LostItem> items = [
     LostItem(
+      id: 1,
       name: 'HP Samsung Biru',
       category: 'HP',
       location: 'Masjid Kampus',
@@ -69,6 +45,7 @@ class ItemService {
       contact: '081234567801',
     ),
     LostItem(
+      id: 2,
       name: 'Kartu Mahasiswa a.n. Budi',
       category: 'Kartu Mahasiswa',
       location: 'Perpustakaan',
@@ -77,6 +54,7 @@ class ItemService {
       contact: '081234567802',
     ),
     LostItem(
+      id: 3,
       name: 'Kunci Motor Honda',
       category: 'Kunci',
       location: 'Parkiran Gedung A',
@@ -90,13 +68,33 @@ class ItemService {
   static int get lostCount => items.where((e) => !e.found).length;
   static int get foundCount => items.where((e) => e.found).length;
 
+  /// ID berikutnya (auto-increment sederhana, tidak direset saat data dihapus).
+  static int _nextId = 4;
+  static int get nextId => _nextId++;
+
+  /// CREATE
   static void add(LostItem item) {
     items.insert(0, item);
     changes.value++;
   }
 
+  /// UPDATE
+  static void update(LostItem updated) {
+    final index = items.indexWhere((e) => e.id == updated.id);
+    if (index == -1) return;
+    items[index] = updated;
+    changes.value++;
+  }
+
+  /// UPDATE status
   static void markFound(LostItem item) {
     item.found = true;
+    changes.value++;
+  }
+
+  /// DELETE
+  static void delete(LostItem item) {
+    items.removeWhere((e) => e.id == item.id);
     changes.value++;
   }
 }

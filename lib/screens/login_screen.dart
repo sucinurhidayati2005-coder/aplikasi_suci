@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../utils/validators.dart';
 import '../widgets/page_header.dart';
+import '../widgets/status_text.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,6 +16,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailC = TextEditingController();
   final _passC = TextEditingController();
   bool _hide = true;
+  String _status = '';
+  bool _statusError = false;
 
   @override
   void dispose() {
@@ -23,14 +27,26 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _submit() {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      setState(() {
+        _status = 'Periksa kembali input yang belum valid';
+        _statusError = true;
+      });
+      return;
+    }
     if (AuthService.login(_emailC.text, _passC.text)) {
       Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Email atau password salah / akun belum terdaftar')),
-      );
+      setState(() {
+        _status = 'Login gagal. Periksa email dan password.';
+        _statusError = true;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Email atau password salah / akun belum terdaftar')),
+        );
+      }
     }
   }
 
@@ -50,11 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 labelText: 'Email',
                 prefixIcon: Icon(Icons.email_outlined),
               ),
-              validator: (v) {
-                if (v == null || v.isEmpty) return 'Email wajib diisi';
-                if (!v.contains('@')) return 'Email tidak valid';
-                return null;
-              },
+              validator: Validators.email,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -70,9 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: () => setState(() => _hide = !_hide),
                 ),
               ),
-              validator: (v) => (v == null || v.length < 6)
-                  ? 'Password minimal 6 karakter'
-                  : null,
+              validator: Validators.password,
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -82,6 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: const Text('Masuk'),
               ),
             ),
+            StatusText(_status, isError: _statusError),
             const SizedBox(height: 8),
             TextButton(
               onPressed: () =>
