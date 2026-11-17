@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/item_service.dart';
 import '../theme.dart';
+import '../utils/validators.dart';
 import '../widgets/page_header.dart';
+import '../widgets/status_text.dart';
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
@@ -19,6 +21,30 @@ class _ReportScreenState extends State<ReportScreen> {
   String _category = ItemService.categories.first;
   DateTime _date = DateTime.now();
 
+  String _status = '';
+
+  LostItem? _editing; // null = mode tambah, terisi = mode ubah
+  bool _loaded = false;
+
+  bool get _isEdit => _editing != null;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_loaded) return;
+    _loaded = true;
+    final arg = ModalRoute.of(context)?.settings.arguments;
+    if (arg is LostItem) {
+      _editing = arg;
+      _nameC.text = arg.name;
+      _locationC.text = arg.location;
+      _descC.text = arg.description;
+      _contactC.text = arg.contact;
+      _category = arg.category;
+      _date = arg.date;
+    }
+  }
+
   @override
   void dispose() {
     _nameC.dispose();
@@ -29,27 +55,53 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final last = _date.isAfter(now) ? _date : now;
     final picked = await showDatePicker(
       context: context,
       initialDate: _date,
       firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
+      lastDate: last,
     );
+    if (!mounted) return;
     if (picked != null) setState(() => _date = picked);
   }
 
   void _submit() {
-    if (!_formKey.currentState!.validate()) return;
-    ItemService.add(LostItem(
-      name: _nameC.text.trim(),
-      category: _category,
-      location: _locationC.text.trim(),
-      date: _date,
-      description: _descC.text.trim(),
-      contact: _contactC.text.trim(),
-    ));
+    if (!_formKey.currentState!.validate()) {
+      setState(() => _status = 'Periksa kembali input yang belum valid');
+      return;
+    }
+    if (_isEdit) {
+      // UPDATE
+      ItemService.update(LostItem(
+        id: _editing!.id,
+        name: _nameC.text.trim(),
+        category: _category,
+        location: _locationC.text.trim(),
+        date: _date,
+        description: _descC.text.trim(),
+        contact: _contactC.text.trim(),
+        found: _editing!.found,
+      ));
+    } else {
+      // CREATE
+      ItemService.add(LostItem(
+        id: ItemService.nextId,
+        name: _nameC.text.trim(),
+        category: _category,
+        location: _locationC.text.trim(),
+        date: _date,
+        description: _descC.text.trim(),
+        contact: _contactC.text.trim(),
+      ));
+    }
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Laporan berhasil dikirim')),
+      SnackBar(
+        content: Text(_isEdit
+            ? 'Data berhasil diperbarui'
+            : 'Data berhasil ditambahkan'),
+      ),
     );
     Navigator.pop(context);
   }
@@ -66,8 +118,10 @@ class _ReportScreenState extends State<ReportScreen> {
   @override
   Widget build(BuildContext context) {
     return HeaderScaffold(
-      title: 'Lapor Barang Hilang',
-      subtitle: 'Makin lengkap detailnya, makin mudah barangmu ditemukan.',
+      title: _isEdit ? 'Ubah Laporan' : 'Lapor Barang Hilang',
+      subtitle: _isEdit
+          ? 'Perbarui detail laporan, lalu simpan.'
+          : 'Makin lengkap detailnya, makin mudah barangmu ditemukan.',
       maxWidth: 560,
       child: Form(
         key: _formKey,
@@ -108,9 +162,7 @@ class _ReportScreenState extends State<ReportScreen> {
                 hintText: 'Contoh: Dompet kulit hitam',
                 prefixIcon: Icon(Icons.inventory_2_outlined),
               ),
-              validator: (v) => (v == null || v.trim().isEmpty)
-                  ? 'Nama barang wajib diisi'
-                  : null,
+              validator: (v) => Validators.name(v, 'Nama barang'),
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -120,9 +172,7 @@ class _ReportScreenState extends State<ReportScreen> {
                 hintText: 'Contoh: Kantin Kampus',
                 prefixIcon: Icon(Icons.place_outlined),
               ),
-              validator: (v) => (v == null || v.trim().isEmpty)
-                  ? 'Lokasi wajib diisi'
-                  : null,
+              validator: (v) => Validators.name(v, 'Lokasi'),
             ),
             const SizedBox(height: 16),
             InkWell(
@@ -146,9 +196,7 @@ class _ReportScreenState extends State<ReportScreen> {
                 hintText: 'Warna, merek, tanda khusus...',
                 alignLabelWithHint: true,
               ),
-              validator: (v) => (v == null || v.trim().isEmpty)
-                  ? 'Deskripsi wajib diisi'
-                  : null,
+              validator: (v) => Validators.minLength(v, 'Ciri-ciri', 10),
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -158,19 +206,19 @@ class _ReportScreenState extends State<ReportScreen> {
                 labelText: 'Kontak (No. HP)',
                 prefixIcon: Icon(Icons.phone_outlined),
               ),
-              validator: (v) => (v == null || v.trim().length < 8)
-                  ? 'Nomor kontak tidak valid'
-                  : null,
+              validator: Validators.phone,
             ),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
                 onPressed: _submit,
-                icon: const Icon(Icons.send_rounded, size: 20),
-                label: const Text('Kirim Laporan'),
+                icon: Icon(_isEdit ? Icons.save_rounded : Icons.send_rounded,
+                    size: 20),
+                label: Text(_isEdit ? 'Simpan Perubahan' : 'Kirim Laporan'),
               ),
             ),
+            StatusText(_status, isError: true),
           ],
         ),
       ),

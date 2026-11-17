@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../utils/validators.dart';
 import '../widgets/page_header.dart';
+import '../widgets/status_text.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -16,6 +18,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passC = TextEditingController();
   final _confirmC = TextEditingController();
   bool _hide = true;
+  String _status = '';
 
   @override
   void dispose() {
@@ -27,14 +30,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _submit() {
-    if (!_formKey.currentState!.validate()) return;
-    final ok = AuthService.register(_nameC.text, _emailC.text, _passC.text);
-    if (!ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email sudah terdaftar')),
-      );
+    if (!_formKey.currentState!.validate()) {
+      setState(() => _status = 'Periksa kembali input yang belum valid');
       return;
     }
+    final ok = AuthService.register(_nameC.text, _emailC.text, _passC.text);
+    if (!ok) {
+      setState(() => _status = 'Email sudah terdaftar');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email sudah terdaftar')),
+        );
+      }
+      return;
+    }
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Registrasi berhasil, silakan login')),
     );
@@ -57,8 +67,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 labelText: 'Nama Lengkap',
                 prefixIcon: Icon(Icons.person_outline),
               ),
-              validator: (v) =>
-                  (v == null || v.isEmpty) ? 'Nama wajib diisi' : null,
+              validator: Validators.name,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -68,11 +77,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 labelText: 'Email',
                 prefixIcon: Icon(Icons.email_outlined),
               ),
-              validator: (v) {
-                if (v == null || v.isEmpty) return 'Email wajib diisi';
-                if (!v.contains('@')) return 'Email tidak valid';
-                return null;
-              },
+              validator: Validators.email,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -88,9 +93,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onPressed: () => setState(() => _hide = !_hide),
                 ),
               ),
-              validator: (v) => (v == null || v.length < 6)
-                  ? 'Password minimal 6 karakter'
-                  : null,
+              validator: Validators.password,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -100,8 +103,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 labelText: 'Konfirmasi Password',
                 prefixIcon: Icon(Icons.lock_reset),
               ),
-              validator: (v) =>
-                  v != _passC.text ? 'Password tidak sama' : null,
+              validator: (v) {
+                if (v == null || v.isEmpty) {
+                  return 'Konfirmasi password tidak boleh kosong';
+                }
+                return v != _passC.text ? 'Password tidak sama' : null;
+              },
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -111,6 +118,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: const Text('Daftar'),
               ),
             ),
+            StatusText(_status, isError: true),
             const SizedBox(height: 8),
             TextButton(
               onPressed: () =>

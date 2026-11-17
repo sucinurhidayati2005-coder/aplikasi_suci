@@ -27,6 +27,67 @@ class _ItemListScreenState extends State<ItemListScreen> {
     }).toList();
   }
 
+  void _snack(String msg) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  void _markFound(LostItem item) {
+    ItemService.markFound(item);
+    _snack('Status diperbarui: barang ditandai ditemukan');
+  }
+
+  void _confirmDelete(LostItem item) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Konfirmasi Hapus'),
+        content: Text('Apakah Anda yakin ingin menghapus "${item.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              ItemService.delete(item);
+              if (mounted) _snack('Data berhasil dihapus');
+            },
+            style: TextButton.styleFrom(foregroundColor: AppColors.lost),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptyState({required bool noData}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 48),
+      child: Column(
+        children: [
+          const Icon(Icons.inbox_outlined, size: 56, color: AppColors.muted),
+          const SizedBox(height: 12),
+          Text(
+              noData
+                  ? 'Belum ada data. Silakan tambahkan data baru.'
+                  : 'Belum ada barang yang cocok',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  fontWeight: FontWeight.w700, color: AppColors.ink)),
+          const SizedBox(height: 4),
+          Text(
+              noData
+                  ? 'Tekan tombol "Lapor" untuk menambah laporan.'
+                  : 'Coba ubah kata kunci atau filter.',
+              style: const TextStyle(color: AppColors.muted)),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const labels = ['Semua', 'Hilang', 'Ditemukan'];
@@ -89,29 +150,18 @@ class _ItemListScreenState extends State<ItemListScreen> {
                         ),
                         const SizedBox(height: 16),
                         if (list.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 48),
-                            child: Column(
-                              children: [
-                                Icon(Icons.inbox_outlined,
-                                    size: 56, color: AppColors.muted),
-                                SizedBox(height: 12),
-                                Text('Belum ada barang yang cocok',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.ink)),
-                                SizedBox(height: 4),
-                                Text('Coba ubah kata kunci atau filter.',
-                                    style: TextStyle(color: AppColors.muted)),
-                              ],
-                            ),
-                          )
+                          _emptyState(noData: ItemService.items.isEmpty)
                         else
                           for (final item in list)
                             ItemCard(
+                              key: ValueKey(item.id),
                               item: item,
                               detailed: true,
-                              onMarkFound: () => ItemService.markFound(item),
+                              onMarkFound: () => _markFound(item),
+                              onEdit: () => Navigator.pushNamed(
+                                  context, '/report',
+                                  arguments: item),
+                              onDelete: () => _confirmDelete(item),
                             ),
                       ],
                     );

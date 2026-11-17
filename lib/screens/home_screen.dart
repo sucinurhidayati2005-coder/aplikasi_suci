@@ -15,12 +15,20 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            PageHeader(
+            ValueListenableBuilder<int>(
+              valueListenable: AuthService.profileChanges,
+              builder: (context, _, __) => PageHeader(
               title: 'Halo, ${AuthService.currentName ?? 'Pengguna'}!',
               subtitle: 'Temukan Barangmu!',
               showBack: false,
               bottomPadding: 68,
               actions: [
+                IconButton(
+                  icon: const Icon(Icons.person_rounded),
+                  color: Colors.white,
+                  tooltip: 'Profil',
+                  onPressed: () => Navigator.pushNamed(context, '/profile'),
+                ),
                 IconButton(
                   icon: const Icon(Icons.logout_rounded),
                   color: Colors.white,
@@ -32,7 +40,7 @@ class HomeScreen extends StatelessWidget {
                   },
                 ),
               ],
-            ),
+            )),
             Transform.translate(
               offset: const Offset(0, -40),
               child: Center(
@@ -133,7 +141,27 @@ class _Body extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 6),
-        for (final item in latest) ItemCard(item: item),
+        if (latest.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: softShadow,
+            ),
+            child: const Column(
+              children: [
+                Icon(Icons.inbox_outlined, size: 48, color: AppColors.muted),
+                SizedBox(height: 10),
+                Text('Belum ada data. Silakan tambahkan data baru.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700, color: AppColors.ink)),
+              ],
+            ),
+          )
+        else
+          for (final item in latest) ItemCard(item: item),
         const SizedBox(height: 16),
       ],
     );

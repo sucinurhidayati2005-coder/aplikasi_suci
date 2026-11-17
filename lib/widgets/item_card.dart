@@ -6,12 +6,16 @@ class ItemCard extends StatelessWidget {
   final LostItem item;
   final bool detailed;
   final VoidCallback? onMarkFound;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   const ItemCard({
     super.key,
     required this.item,
     this.detailed = false,
     this.onMarkFound,
+    this.onEdit,
+    this.onDelete,
   });
 
   Widget _meta(IconData icon, String text) => Padding(
@@ -141,6 +145,29 @@ class ItemCard extends StatelessWidget {
                             ),
                         ],
                       ),
+                      if (onEdit != null || onDelete != null) ...[
+                        const Divider(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (onEdit != null)
+                              TextButton.icon(
+                                onPressed: onEdit,
+                                icon: const Icon(Icons.edit_rounded, size: 18),
+                                label: const Text('Ubah'),
+                              ),
+                            if (onDelete != null)
+                              TextButton.icon(
+                                onPressed: onDelete,
+                                icon: const Icon(Icons.delete_rounded,
+                                    size: 18),
+                                label: const Text('Hapus'),
+                                style: TextButton.styleFrom(
+                                    foregroundColor: AppColors.lost),
+                              ),
+                          ],
+                        ),
+                      ],
                     ],
                   ],
                 ),
