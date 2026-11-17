@@ -1,16 +1,122 @@
-# flutter_application_1
+# Temukan Barangmu
 
-A new Flutter project.
+## Deskripsi
+Temukan Barangmu adalah aplikasi prototype untuk membantu mahasiswa melaporkan
+barang hilang di kampus dan melihat barang yang sudah ditemukan.
 
-## Getting Started
+## Identitas Aplikasi
+- **Nama:** Temukan Barangmu
+- **Tema:** Lost & Found kampus
+- **Tujuan:** Mempermudah pelaporan dan pencarian barang hilang/ditemukan di lingkungan kampus.
+- **Pengguna sasaran:** Mahasiswa, dosen, dan staf kampus.
 
-This project is a starting point for a Flutter application.
+## Milestone Saat Ini
+Mini App v1.0 (integrasi Prototype v0.0, UI Blueprint, Navigation v0.1, Form & Validation v0.2, Data Module v0.3)
 
-A few resources to get you started if this is your first Flutter project:
+## Versi
+v1.0 - Mini App Release
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Fitur Minimal Mini App v1.0
+| No | Fitur | Implementasi |
+|---|---|---|
+| 1 | Identitas aplikasi | Bagian "Identitas Aplikasi" di atas + Welcome screen |
+| 2 | UI dasar | Tema konsisten (`theme.dart`), kartu, ikon + label, kontras teks |
+| 3 | Minimal 3 screen | Welcome, Login, Registrasi, Home, Profil, Lapor, Daftar Barang |
+| 4 | Navigasi | Named routes di `main.dart` |
+| 5 | Form + validasi | Login, Registrasi, Profil, Lapor (`utils/validators.dart`) |
+| 6 | User feedback | SnackBar, dialog konfirmasi, teks status |
+| 7 | Data lokal/mock | `List<LostItem>` + 3 data contoh |
+| 8 | CRUD sederhana | Create, Read, Update, Delete (4 dari 4) |
+| 9 | Empty state | Daftar Barang dan Home |
+| 10 | Dokumentasi | README.md, CHANGELOG.md (sampai v1.0), AI_USAGE.md |
+| 11 | Bukti running | `flutter run -d chrome` + screenshot/video: [isi link] |
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Daftar Screen
+- Welcome
+- Login
+- Registrasi
+- Home (statistik + laporan terbaru)
+- Profil Saya (Form Data Pengguna, BAB 6)
+- Form Lapor Barang (juga dipakai sebagai form Ubah Laporan)
+- Daftar Barang / Data Module (cari, filter, ubah, hapus, tandai ditemukan)
+
+## Cara Menjalankan
+```bash
+flutter pub get
+flutter run -d chrome
+```
+
+---
+
+## BAB 6 - Form & Validation v0.2
+
+### Fitur
+- Form dengan `Form`, `GlobalKey<FormState>`, dan `TextFormField` + `validator`.
+- Form: Login, Registrasi, Profil Saya, Lapor Barang.
+- Aturan validasi dipusatkan di `lib/utils/validators.dart`.
+- Pesan error yang jelas di bawah input.
+- User feedback: `SnackBar` dan teks status (`StatusText`, state via `setState`).
+- `TextEditingController` selalu di-`dispose()`; `mounted` dicek sebelum memakai `context` setelah proses.
+- Navigasi v0.1 tetap berjalan.
+
+### Aturan Validasi
+| Input | Aturan | Pesan error |
+|---|---|---|
+| Nama / Nama barang / Lokasi | Wajib, minimal 3 karakter | "... tidak boleh kosong" / "... minimal 3 karakter" |
+| Email | Wajib, format `x@y.z` | "Email tidak boleh kosong" / "Format email belum sesuai" |
+| Password | Wajib, minimal 6 karakter | "Password tidak boleh kosong" / "Password minimal 6 karakter" |
+| Konfirmasi password | Wajib, sama dengan password | "Password tidak sama" |
+| Ciri-ciri barang | Wajib, minimal 10 karakter | "Ciri-ciri minimal 10 karakter" |
+| Kontak | Wajib, 8-15 angka | "Nomor kontak harus 8-15 angka" |
+
+### Skenario Uji BAB 6
+| Skenario | Input | Hasil yang diharapkan |
+|---|---|---|
+| Form kosong | Semua kosong, tekan submit | Pesan error di tiap input + status "Periksa kembali input yang belum valid" |
+| Nama terlalu pendek | Nama: `An` | "Nama minimal 3 karakter" |
+| Email tidak valid | `tanpa-at` | "Format email belum sesuai" |
+| Form valid | Nama & email benar (Profil) | SnackBar "Data berhasil diproses" + teks status berubah |
+| Navigasi tetap berjalan | Home -> Profil -> kembali | Tanpa error |
+
+---
+
+## BAB 7 - Data Module v0.3
+
+### Model Data
+`LostItem` (`lib/models/lost_item.dart`): id, name, category, location, date, description, contact, found.
+
+### Sumber Data
+Data sementara di memori aplikasi menggunakan `List<LostItem>` dan mock data
+(3 data awal di `lib/services/item_service.dart`). Data hilang saat aplikasi di-restart.
+Input create/update memakai form tervalidasi dari BAB 6.
+
+### Fitur
+- **Create**: tambah laporan lewat form Lapor.
+- **Read**: daftar, pencarian, filter Semua/Hilang/Ditemukan.
+- **Update**: tombol "Ubah" membuka form yang sama (terisi data lama); "Tandai ditemukan".
+- **Delete**: tombol "Hapus" dengan dialog konfirmasi.
+- Empty state di Daftar Barang dan Home.
+- SnackBar setelah tambah, ubah, hapus, dan tandai ditemukan.
+- Navigasi v0.1 dan Form & Validation v0.2 tetap berjalan.
+
+### Skenario Uji BAB 7
+| Skenario | Aksi | Hasil yang diharapkan |
+|---|---|---|
+| Read data awal | Buka Daftar Barang | 3 data awal tampil |
+| Create | Lapor Barang, isi form valid, kirim | Data baru di atas + SnackBar "Data berhasil ditambahkan" |
+| Update | "Ubah", ganti nilai, simpan | Data berubah + SnackBar "Data berhasil diperbarui" |
+| Delete | "Hapus" lalu "Hapus" di dialog | Data hilang + SnackBar "Data berhasil dihapus" |
+| Batal hapus | "Hapus" lalu "Batal" | Data tetap ada |
+| Empty state | Hapus semua data | "Belum ada data. Silakan tambahkan data baru." |
+| Form BAB 6 tetap jalan | Kirim form kosong | Validasi dan feedback tetap berfungsi |
+
+## Build APK
+```bash
+flutter build apk --release
+# hasil: build/app/outputs/flutter-apk/app-release.apk
+```
+
+## Catatan Keamanan Data
+Data yang digunakan merupakan data simulasi dan tidak memuat data pribadi nyata,
+API key, token, password, credential, atau data sensitif. Nomor kontak pada mock
+data adalah nomor contoh.
